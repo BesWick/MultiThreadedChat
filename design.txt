@@ -1,0 +1,104 @@
+Author: Alexander Dobrota
+
+Overview: Purpose of this assignment is to create a chat program in chat
+
+
+
+Design:
+
+Server: Will run a thread for each client
+Client: will rely on select() to choose the appropiate fd to read/write 
+
+
+
+Psuedo Code/Protocol
+Server: 
+
+*thread for each client*
+ while(1){
+        int clientfd   = accept(clientlistensockfd,(struct sockaddr *) &client_addr, &client_size);
+        char * clientip = inet_ntoa(client_addr.sin_addr);
+        int clientport = (int) ntohs(client_addr.sin_port);
+        i++;
+        
+        worker_args * threadargs = calloc(1, sizeof(worker_args));
+        threadargs->clientnum = i;
+        threadargs->socket = clientfd;
+        threadargs->clientport = clientport;
+        threadargs->clientip = (char*)malloc(sizeof(char) * 100);
+        strcpy(threadargs->clientip, clientip);
+        if( pthread_create( &tid , NULL ,  handleConnection , (void*) threadargs) < 0){
+            perror("could not create thread");
+            return 1;
+        }
+        
+        printf("finished with thread #%d\n", i);
+
+        
+*READING from client LOGIC
+int  readclientbuffer(int socket, clientinfo * myclient){
+    char buffer[512];
+    while(1){
+        int recvsize = recv(socket, buffer, sizeof(buffer), 0);
+        if(recvsize > 0){
+            printf("buffer = %s\n", buffer);
+            puts("got msg");
+            if(strcmp(buffer, "getlist")== 0){
+                handleGetListCmd(buffer,socket);
+            }
+            if(strcmp(buffer, "waiting")== 0){
+                recv(socket, buffer, sizeof(buffer), 0);
+                int listenport = atoi(buffer);
+                myclient->port = listenport;
+                inputclientdata(myclient);
+                
+            }
+            if(strcmp(buffer, "chat")== 0){
+                recv(socket, buffer, sizeof(buffer), 0);
+                char reqid[strlen(buffer)];
+                strcpy(reqid, buffer);
+                int foundidwithport = checkWaitingListforID(buffer);
+                char datareq[512];
+                
+                
+                //SENDING the REQ CLIENT DATA
+                sprintf(datareq, "connectreq %d username %s", foundidwithport, reqid);
+                write(socket, datareq, strlen(datareq));
+            }
+        }
+        else{
+            break;
+        }
+        
+    }
+    return 0;
+}
+
+
+
+client:
+
+SELECT LOGIC:
+for(int i = 0; i <= fdmax; i++) {
+            if (FD_ISSET(i, &read_fds)) { 
+
+                if (i == STDIN){
+                    //recieved data from stdin
+                    } 
+                 else if (i == listener) {
+                    /reccieved connection request
+
+                 } else if (i == serverfd){
+                    /recieved data from server
+
+                } else if (i == clientfd){
+                    /recieved data from a chat client
+
+
+STATE LOGIC:
+
+    initial state <- what the code begins with
+        info    <-user trying to get list from server
+        wait    <-client waiting for connection
+        chat    <-client wants to connect to another client
+        
