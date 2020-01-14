@@ -2,6 +2,11 @@ Author: Alexander Dobrota (adobrota)
 
 Final HW: Chat Program
 
+What is this? 
+    A TCP-based chat program composed of a client for the end users and a server program which will be used to connect clients so that they can exchange messages. The client operates in three modes: asking the server for information (INFO), waiting to be contacted by another client (WAIT), or exchanging messages with another client (CHAT). For more information check out my final report!
+
+
+
 Files:
     README.txt
     Makefile
